@@ -1,0 +1,504 @@
+{
+	"info": {
+		"_postman_id": "ecohome-store-collection",
+		"name": "EcoHome Store API",
+		"description": "Coleccion completa de pruebas para el backend de EcoHome Store.\n\nFlujo: signup -> login -> usar token -> CRUD de productos.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000/api/v1"
+		},
+		{
+			"key": "adminToken",
+			"value": ""
+		},
+		{
+			"key": "clienteToken",
+			"value": ""
+		},
+		{
+			"key": "productId",
+			"value": ""
+		}
+	],
+	"item": [
+		{
+			"name": "Auth",
+			"description": "Endpoints de autenticacion (signup y login)",
+			"item": [
+				{
+					"name": "1. Signup - Registrar Admin",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Administrador\",\n    \"email\": \"admin@ecohome.com\",\n    \"password\": \"admin123\",\n    \"role\": \"admin\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/signup",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "signup"]
+						},
+						"description": "Registra un usuario con rol admin."
+					},
+					"response": []
+				},
+				{
+					"name": "2. Signup - Registrar Cliente",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Juan Cliente\",\n    \"email\": \"juan@test.com\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/signup",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "signup"]
+						},
+						"description": "Registra un usuario con rol cliente (por defecto)."
+					},
+					"response": []
+				},
+				{
+					"name": "3. Login - Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.data && jsonData.data.token) {",
+									"    pm.collectionVariables.set('adminToken', jsonData.data.token);",
+									"    console.log('Token admin guardado.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@ecohome.com\",\n    \"password\": \"admin123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "login"]
+						},
+						"description": "Inicia sesion como admin y guarda el token automaticamente."
+					},
+					"response": []
+				},
+				{
+					"name": "4. Login - Cliente",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.data && jsonData.data.token) {",
+									"    pm.collectionVariables.set('clienteToken', jsonData.data.token);",
+									"    console.log('Token cliente guardado.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"juan@test.com\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "login"]
+						},
+						"description": "Inicia sesion como cliente y guarda el token automaticamente."
+					},
+					"response": []
+				},
+				{
+					"name": "5. Login - Credenciales invalidas",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@ecohome.com\",\n    \"password\": \"wrongpassword\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "login"]
+						},
+						"description": "Intento de login con credenciales incorrectas. Debe retornar 401."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Products - Consulta (Publico)",
+			"description": "Rutas GET de productos, accesibles sin autenticacion.",
+			"item": [
+				{
+					"name": "6. GET Todos los productos",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/products",
+							"host": ["{{baseUrl}}"],
+							"path": ["products"]
+						},
+						"description": "Obtiene la lista completa de productos. No requiere token."
+					},
+					"response": []
+				},
+				{
+					"name": "7. GET Producto por ID (existe)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/products/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["products", "1"]
+						},
+						"description": "Obtiene un producto existente por su ID."
+					},
+					"response": []
+				},
+				{
+					"name": "8. GET Producto por ID (no existe)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/products/999",
+							"host": ["{{baseUrl}}"],
+							"path": ["products", "999"]
+						},
+						"description": "Intenta obtener un producto que no existe. Debe retornar 404."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Products - CRUD (Admin)",
+			"description": "Operaciones de creacion, actualizacion y eliminacion. Requieren token de admin.",
+			"item": [
+				{
+					"name": "9. POST Crear producto (Admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.data && jsonData.data.id) {",
+									"    pm.collectionVariables.set('productId', jsonData.data.id);",
+									"    console.log('ID del producto creado guardado: ' + jsonData.data.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Jabonera de bambu\",\n    \"price\": 9.50,\n    \"description\": \"Jabonera ecologica hecha de bambu natural\",\n    \"stock\": 40\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/products",
+							"host": ["{{baseUrl}}"],
+							"path": ["products"]
+						},
+						"description": "Crea un nuevo producto con token de admin. Guarda el ID automaticamente."
+					},
+					"response": []
+				},
+				{
+					"name": "10. PUT Actualizar producto (Admin)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"price\": 11.99,\n    \"stock\": 55\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/products/{{productId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["products", "{{productId}}"]
+						},
+						"description": "Actualiza precio y stock del producto creado anteriormente."
+					},
+					"response": []
+				},
+				{
+					"name": "11. PATCH Actualizar parcial (Admin)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"available\": false\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/products/{{productId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["products", "{{productId}}"]
+						},
+						"description": "Marca un producto como no disponible (agotado)."
+					},
+					"response": []
+				},
+				{
+					"name": "12. DELETE Eliminar producto (Admin)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/products/{{productId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["products", "{{productId}}"]
+						},
+						"description": "Elimina el producto creado. Solo admin puede ejecutar esta accion."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Products - Errores y Seguridad",
+			"description": "Pruebas de seguridad, validacion y control de acceso.",
+			"item": [
+				{
+					"name": "13. POST Crear sin token (401)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Producto sin auth\",\n    \"price\": 10.00\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/products",
+							"host": ["{{baseUrl}}"],
+							"path": ["products"]
+						},
+						"description": "Intento de crear producto sin token. Debe retornar 401."
+					},
+					"response": []
+				},
+				{
+					"name": "14. POST Crear con token cliente (403)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{clienteToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Producto cliente\",\n    \"price\": 10.00\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/products",
+							"host": ["{{baseUrl}}"],
+							"path": ["products"]
+						},
+						"description": "Intento de crear producto con token de cliente. Debe retornar 403."
+					},
+					"response": []
+				},
+				{
+					"name": "15. DELETE con token cliente (403)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{clienteToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/products/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["products", "1"]
+						},
+						"description": "Intento de eliminar producto con token de cliente. Debe retornar 403."
+					},
+					"response": []
+				},
+				{
+					"name": "16. POST Validacion - price invalido (400)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Producto invalido\",\n    \"price\": -5\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/products",
+							"host": ["{{baseUrl}}"],
+							"path": ["products"]
+						},
+						"description": "Intento de crear producto con precio negativo. Debe retornar 400."
+					},
+					"response": []
+				},
+				{
+					"name": "17. POST Validacion - sin name (400)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"price\": 10.00\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/products",
+							"host": ["{{baseUrl}}"],
+							"path": ["products"]
+						},
+						"description": "Intento de crear producto sin nombre. Debe retornar 400."
+					},
+					"response": []
+				},
+				{
+					"name": "18. POST Validacion - token invalido (401)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer token_falso_invalido"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Producto\",\n    \"price\": 10.00\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/products",
+							"host": ["{{baseUrl}}"],
+							"path": ["products"]
+						},
+						"description": "Intento con token JWT falso. Debe retornar 401."
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
