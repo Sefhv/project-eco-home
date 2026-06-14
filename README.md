@@ -46,6 +46,12 @@ Este comando crea las tablas `users` y `products`, inserta un usuario admin y pr
 npm run setup-db
 ```
 
+Para crear la tabla de mensajes del chat:
+
+```bash
+npm run setup-chat
+```
+
 Credenciales del admin por defecto:
 - Email: admin@ecohome.com
 - Password: admin123
@@ -53,14 +59,18 @@ Credenciales del admin por defecto:
 ## Ejecutar el servidor
 
 ```bash
-# Produccion
+# API principal (puerto 3000)
 npm start
 
-# Desarrollo (auto-reload)
+# Desarrollo con auto-reload
 npm run dev
+
+# Servidor de chat (puerto 3001) - ejecutar en otra terminal
+npm run chat
 ```
 
-El servidor inicia en `http://localhost:3000`
+La API principal inicia en `http://localhost:3000`
+El chat inicia en `http://localhost:3001`
 
 ## Endpoints
 
@@ -81,6 +91,18 @@ El servidor inicia en `http://localhost:3000`
 | PUT | /api/v1/products/:id | Actualizar producto | Admin |
 | PATCH | /api/v1/products/:id | Actualizar parcialmente | Admin |
 | DELETE | /api/v1/products/:id | Eliminar producto | Admin |
+
+### Chat (WebSocket)
+
+| Evento | Direccion | Descripcion |
+|--------|-----------|-------------|
+| connection | Cliente -> Servidor | Conectar con token JWT |
+| messages | Servidor -> Cliente | Ultimos 10 mensajes (al conectar) |
+| new-message | Bidireccional | Enviar/recibir mensaje en tiempo real |
+| user-connected | Servidor -> Cliente | Notificacion de conexion |
+| user-disconnected | Servidor -> Cliente | Notificacion de desconexion |
+
+**Frontend del chat:** http://localhost:3000/chat
 
 ### Codigos de respuesta
 
@@ -129,20 +151,26 @@ project-eco-home/
 ├── package.json
 ├── test-api.js
 ├── EcoHome_Store.postman_collection.json
+├── public/
+│   └── chat.html                  # Frontend React del chat
 └── src/
-    ├── app.js
+    ├── app.js                     # API REST (puerto 3000)
+    ├── server-chat.js             # Servidor de chat independiente (puerto 3001)
     ├── config/
     │   └── database.js
     ├── controllers/
     │   ├── authController.js
     │   └── productController.js
     ├── database/
-    │   ├── init.sql
-    │   └── setup.js
+    │   ├── init.sql               # DDL tablas users y products
+    │   ├── chat.sql               # DDL tabla messages
+    │   ├── setup.js               # Inicializa BD principal
+    │   └── setup-chat.js          # Inicializa tabla messages
     ├── middlewares/
     │   ├── authJWT.js
     │   └── authorizeRole.js
     ├── models/
+    │   ├── messageModel.js
     │   ├── productModel.js
     │   └── userModel.js
     └── routes/
@@ -155,7 +183,9 @@ project-eco-home/
 - **Express.js** - Framework web
 - **PostgreSQL** - Base de datos relacional
 - **pg** - Driver de PostgreSQL para Node.js (connection pool)
+- **Socket.IO** - Comunicacion WebSocket en tiempo real
 - **jsonwebtoken** - Generacion y verificacion de JWT
 - **bcryptjs** - Hashing de contrasenas
 - **dotenv** - Variables de entorno
 - **cors** - Soporte Cross-Origin
+- **React 18** - Frontend del chat (via CDN)
