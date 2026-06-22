@@ -136,6 +136,38 @@ const AuthController = {
                 message: 'Error interno del servidor.'
             });
         }
+    },
+
+    /**
+     * GET /auth/me/stats
+     * Obtener perfil y estadísticas del usuario autenticado
+     */
+    async getMyStats(req, res) {
+        try {
+            const userId = req.user.id;
+            const ProductModel = require('../models/productModel');
+
+            const user = await UserModel.findById(userId);
+            const productCount = await ProductModel.countByUser(userId);
+
+            res.status(200).json({
+                success: true,
+                data: {
+                    id: user.id,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                    product_count: productCount,
+                    display: `${user.name} (${productCount})`
+                }
+            });
+        } catch (error) {
+            console.error('Error en getMyStats:', error.message);
+            res.status(500).json({
+                success: false,
+                message: 'Error interno del servidor.'
+            });
+        }
     }
 };
 

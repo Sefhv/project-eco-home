@@ -59,11 +59,12 @@ const ProductController = {
 
     /**
      * POST /products
-     * Crear un nuevo producto (solo admin)
+     * Crear un nuevo producto (solo admin) - con trazabilidad
      */
     async create(req, res) {
         try {
             const { name, price, description, stock, available } = req.body;
+            const createdBy = req.user.id; // Trazabilidad: usuario del JWT
 
             // Validaciones
             if (!name || name.trim() === '') {
@@ -85,7 +86,8 @@ const ProductController = {
                 Number(price),
                 description,
                 stock,
-                available
+                available,
+                createdBy
             );
 
             res.status(201).json({

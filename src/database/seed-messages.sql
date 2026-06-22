@@ -1,7 +1,19 @@
 -- ============================================================
 -- Script para insertar/actualizar mensajes de ejemplo en el chat
--- Ejecutar: psql -U postgres -d postgres -f src/database/seed-messages.sql
+-- Ejecutar: node src/database/run-seed-messages.js
 -- ============================================================
+
+-- Actualizar nombre del admin para que coincida con el historial
+UPDATE users SET name = 'Administrador' WHERE id = 1;
+
+-- Crear usuario Juan Cliente (password: cliente123)
+-- Hash generado con bcryptjs.hash('cliente123', 10)
+INSERT INTO users (id, name, email, password_hash, role)
+VALUES (2, 'Juan Cliente', 'juan@ecohome.com', '$2b$10$placeholder', 'cliente')
+ON CONFLICT (id) DO UPDATE SET name = 'Juan Cliente', email = 'juan@ecohome.com';
+
+-- Actualizar secuencia de users por si se insertó con id explícito
+SELECT setval('users_id_seq', (SELECT MAX(id) FROM users));
 
 -- Limpiar mensajes existentes
 TRUNCATE TABLE messages RESTART IDENTITY;
