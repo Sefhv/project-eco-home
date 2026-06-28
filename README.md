@@ -1,124 +1,147 @@
-# EcoHome Store - Backend API
+# EcoHome Store - Backend
 
-Backend centralizado para la plataforma EcoHome Store. API REST + Chat en tiempo real con Socket.IO.
+Backend unificado para la plataforma EcoHome Store. Sirve tanto al frontend web (React) como a la app movil (Flutter).
 
-## Stack
+## Arquitectura
 
-- **Runtime:** Node.js 18 + Express 5
-- **Base de datos:** PostgreSQL 16 (Docker local / Supabase en producción)
-- **Autenticación:** JWT (stateless)
-- **Tiempo real:** Socket.IO
-- **Contenedores:** Docker
+| Servicio | Puerto | Descripcion |
+|----------|--------|-------------|
+| API REST | 3000 | Auth + CRUD Productos + Stats |
+| Chat Server | 3001 | Socket.IO + JWT + Persistencia |
+| Frontend React | 5173 | Login + Catalogo + Chat |
+| App Flutter | -- | Login + Catalogo + Chat |
+| PostgreSQL | 5432 | Base de datos |
 
-## Endpoints
+## Requisitos
 
-### Auth
-| Método | Ruta | Descripción | Auth |
-|--------|------|-------------|------|
-| POST | `/api/v1/auth/signup` | Registro de usuario | No |
-| POST | `/api/v1/auth/login` | Login (devuelve JWT) | No |
-| GET | `/api/v1/auth/me/stats` | Perfil + contador de productos | Sí |
+- Node.js v18+
+- PostgreSQL corriendo en localhost:5432
 
-### Productos
-| Método | Ruta | Descripción | Auth |
-|--------|------|-------------|------|
-| GET | `/api/v1/products` | Listar productos (con creador) | No |
-| GET | `/api/v1/products/:id` | Obtener producto por ID | No |
-| POST | `/api/v1/products` | Crear producto (trazabilidad) | Admin |
-| PUT | `/api/v1/products/:id` | Actualizar producto | Admin |
-| DELETE | `/api/v1/products/:id` | Eliminar producto | Admin |
-
-### Chat (Socket.IO - puerto 3001)
-| Evento | Dirección | Descripción |
-|--------|-----------|-------------|
-| `messages` | Server → Client | Historial (últimos 10) |
-| `new-message` | Bidireccional | Enviar/recibir mensaje |
-| `user-connected` | Server → Client | Notificación de conexión |
-| `user-disconnected` | Server → Client | Notificación de desconexión |
-
-## Instalación
+## Instalacion
 
 ```bash
-# Clonar
 git clone https://github.com/Sefhv/project-eco-home.git
 cd project-eco-home
-
-# Instalar dependencias
 npm install
-
-# Levantar PostgreSQL con Docker
-docker compose up -d
-
-# Configurar .env (ya incluido con valores por defecto)
-# Editar si es necesario: DB_PASS, JWT_SECRET
-
-# Inicializar base de datos
-npm run setup-db
-npm run setup-chat
-
-# (Opcional) Cargar mensajes de ejemplo
-node src/database/run-seed-messages.js
 ```
 
-## Ejecución
+## Variables de entorno
+
+Crear archivo `.env` en la raiz:
+
+```env
+PORT=3000
+NODE_ENV=development
+CHAT_PORT=3001
+
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=postgres
+DB_USER=postgres
+DB_PASS=admin
+
+JWT_SECRET=ecohome_secret_key_2024_segura
+JWT_EXPIRES_IN=24h
+```
+
+## Inicializar base de datos
 
 ```bash
-# API REST (puerto 3000)
-npm run dev
+npm run setup-db
+```
 
-# Chat Server (puerto 3001) - en otra terminal
+Crea las tablas `users`, `products` (con `created_by`) y `messages`, mas datos de ejemplo.
+
+## Ejecutar
+
+```bash
+# Terminal 1: API REST (puerto 3000)
+npm start
+
+# Terminal 2: Chat Server (puerto 3001)
 npm run chat
-
-# O ambos juntos (producción)
-node src/index.js
 ```
 
 ## Credenciales de prueba
 
-| Usuario | Email | Password | Rol |
-|---------|-------|----------|-----|
-| Administrador | admin@ecohome.com | admin123 | admin |
-| Juan Cliente | juan@ecohome.com | cliente123 | cliente |
+| Rol | Email | Password |
+|-----|-------|----------|
+| Admin | admin@ecohome.com | admin123 |
+| Cliente | juan@test.com | password123 |
 
-## Docker (producción)
+(El cliente se crea via POST /api/v1/auth/signup o ejecutando test-api.js)
+
+## Endpoints API
+
+### Auth
+
+| Metodo | Ruta | Descripcion |
+|--------|------|-------------|
+| POST | /api/v1/auth/signup | Registro |
+| POST | /api/v1/auth/login | Login (retorna JWT) |
+| GET | /api/v1/auth/me/stats | Perfil + contador productos (JWT) |
+
+### Productos
+
+| Metodo | Ruta | Descripcion | Acceso |
+|--------|------|-------------|--------|
+| GET | /api/v1/products | Listar (incluye creator_name) | Publico |
+| GET | /api/v1/products/:id | Obtener por ID | Publico |
+| POST | /api/v1/products | Crear (guarda created_by) | Admin |
+| PUT | /api/v1/products/:id | Actualizar | Admin |
+| PATCH | /api/v1/products/:id | Actualizar parcial | Admin |
+| DELETE | /api/v1/products/:id | Eliminar | Admin |
+
+### Chat (Socket.IO - puerto 3001)
+
+| Evento | Direccion | Descripcion |
+|--------|-----------|-------------|
+| connection | Cliente -> Servidor | Conectar con JWT en auth.token |
+| messages | Servidor -> Cliente | Ultimos 10 mensajes (al conectar) |
+| new-message | Bidireccional | Enviar/recibir mensaje |
+| user-connected | Servidor -> Cliente | Notificacion conexion |
+| user-disconnected | Servidor -> Cliente | Notificacion desconexion |
+
+## Pruebas
 
 ```bash
-docker build -t ecohome-backend .
-docker run -p 3000:3000 -p 3001:3001 --env-file .env.production ecohome-backend
+# Con el servidor corriendo:
+node test-api.js
+
+# Postman: importar EcoHome_Store.postman_collection.json
 ```
 
-## Arquitectura
+## Estructura
 
 ```
 project-eco-home/
-├── src/
-│   ├── index.js              # Entry point unificado
-│   ├── app.js                # API REST (puerto 3000)
-│   ├── server-chat.js        # Chat Server (puerto 3001)
-│   ├── config/database.js    # Pool PostgreSQL
-│   ├── controllers/
-│   │   ├── authController.js
-│   │   └── productController.js
-│   ├── middlewares/
-│   │   ├── authJWT.js
-│   │   └── authorizeRole.js
-│   ├── models/
-│   │   ├── userModel.js
-│   │   ├── productModel.js
-│   │   └── messageModel.js
-│   ├── routes/
-│   │   ├── authRoutes.js
-│   │   └── productRoutes.js
-│   └── socket/chatHandler.js
-├── docker-compose.yml
-├── Dockerfile
-└── package.json
+├── .env
+├── package.json
+├── test-api.js
+├── EcoHome_Store.postman_collection.json
+└── src/
+    ├── app.js                     # API REST (puerto 3000)
+    ├── server-chat.js             # Chat Server (puerto 3001)
+    ├── config/
+    │   └── database.js            # Pool PostgreSQL
+    ├── controllers/
+    │   ├── authController.js      # Login + Signup + Stats
+    │   └── productController.js   # CRUD + Trazabilidad
+    ├── database/
+    │   ├── init.sql               # DDL completo
+    │   ├── setup.js               # Inicializador
+    │   ├── chat.sql               # DDL messages (standalone)
+    │   └── setup-chat.js          # Inicializador messages
+    ├── middlewares/
+    │   ├── authJWT.js
+    │   └── authorizeRole.js
+    ├── models/
+    │   ├── userModel.js
+    │   ├── productModel.js        # Incluye countByUser + JOIN creator
+    │   └── messageModel.js
+    ├── routes/
+    │   ├── authRoutes.js          # Incluye /me/stats
+    │   └── productRoutes.js
+    └── socket/
+        └── chatHandler.js         # Logica Socket.IO separada
 ```
-
-## Puertos
-
-| Servicio | Puerto |
-|----------|--------|
-| API REST | 3000 |
-| Chat (Socket.IO) | 3001 |
-| PostgreSQL | 5432 |
