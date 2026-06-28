@@ -1,5 +1,5 @@
 -- ============================================================
--- EcoHome Store - Script de creación de tablas
+-- EcoHome Store - Script de creacion de tablas
 -- Base de datos: PostgreSQL
 -- ============================================================
 
@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tabla de productos
+-- Tabla de productos (con trazabilidad: created_by)
 CREATE TABLE IF NOT EXISTS products (
     id SERIAL PRIMARY KEY,
     name VARCHAR(200) NOT NULL,
@@ -21,25 +21,22 @@ CREATE TABLE IF NOT EXISTS products (
     description TEXT,
     stock INTEGER DEFAULT 0,
     available BOOLEAN DEFAULT TRUE,
+    created_by INTEGER REFERENCES users(id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Índices para optimizar consultas
+-- Tabla de mensajes (chat interno)
+CREATE TABLE IF NOT EXISTS messages (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id),
+    username VARCHAR(100) NOT NULL,
+    text TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indices para optimizar consultas
 CREATE INDEX IF NOT EXISTS idx_products_name ON products(name);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
-
--- Insertar usuario admin por defecto (password: admin123)
--- El hash corresponde a bcrypt de 'admin123'
-INSERT INTO users (name, email, password_hash, role)
-VALUES ('Administrador', 'admin@ecohome.com', '$2a$10$placeholder', 'admin')
-ON CONFLICT (email) DO NOTHING;
-
--- Insertar productos de ejemplo
-INSERT INTO products (name, price, description, stock, available) VALUES
-('Vaso de vidrio reciclado 350ml', 12.99, 'Vaso artesanal hecho con vidrio 100% reciclado', 50, TRUE),
-('Plato biodegradable grande', 8.50, 'Plato de 25cm fabricado con fibra de caña de azúcar', 120, TRUE),
-('Set de cubiertos de bambú', 15.00, 'Incluye tenedor, cuchillo, cuchara y popote de bambú', 80, TRUE),
-('Bowl de coco natural', 18.75, 'Bowl tallado a mano de cáscara de coco', 35, TRUE),
-('Termo de acero inoxidable 500ml', 25.00, 'Termo reutilizable, mantiene temperatura 12hrs', 60, TRUE)
-ON CONFLICT DO NOTHING;
+CREATE INDEX IF NOT EXISTS idx_products_created_by ON products(created_by);
+CREATE INDEX IF NOT EXISTS idx_messages_created ON messages(created_at);
