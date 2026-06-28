@@ -70,6 +70,15 @@ async function setupDatabase() {
         `, ['Administrador', 'admin@ecohome.com', adminPassword, 'admin']);
         console.log('Usuario admin creado (admin@ecohome.com / admin123).');
 
+        // Insertar usuario cliente por defecto
+        const clientePassword = await bcrypt.hash('password123', 10);
+        await client.query(`
+            INSERT INTO users (name, email, password_hash, role)
+            VALUES ($1, $2, $3, $4)
+            ON CONFLICT (email) DO NOTHING;
+        `, ['Juan Cliente', 'juan@test.com', clientePassword, 'cliente']);
+        console.log('Usuario cliente creado (juan@test.com / password123).');
+
         // Insertar productos de ejemplo (asociados al admin, id=1)
         const productos = [
             ['Vaso de vidrio reciclado 350ml', 12.99, 'Vaso artesanal hecho con vidrio 100% reciclado', 50],
